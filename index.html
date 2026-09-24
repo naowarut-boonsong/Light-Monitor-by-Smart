@@ -3,338 +3,407 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Smart Light Monitor - Live Dashboard</title>
+  <title>Light Monitor - Cloud Command Center</title>
   <style>
     :root {
-      --bg: #0b1329;
-      --surface: #152243;
-      --surface-card: #1c2d59;
-      --border: #2a3f75;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.25);
-      --on-bg: #fbbf24;
-      --on-text: #78350f;
-      --on-glow: rgba(251, 191, 36, 0.3);
-      --off-bg: #10b981;
-      --off-text: #064e3b;
-      --off-glow: rgba(16, 185, 129, 0.25);
-      --danger-bg: #ef4444;
-      --danger-glow: rgba(239, 68, 68, 0.3);
+      --bg-dark: #070c1e;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --border-color: rgba(56, 189, 248, 0.15);
+      --border-glow: rgba(56, 189, 248, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --status-on-bg: rgba(245, 158, 11, 0.15);
+      --status-on-border: #f59e0b;
+      --status-on-text: #fbbf24;
+      --status-off-bg: rgba(16, 185, 129, 0.15);
+      --status-off-border: #10b981;
+      --status-off-text: #34d399;
+      --alert-danger-bg: rgba(244, 63, 94, 0.2);
+      --alert-danger-border: #f43f5e;
+      --alert-danger-text: #fda4af;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(circle at 50% 0%, #1a2d5e 0%, var(--bg) 80%);
-      color: var(--text);
+      background: radial-gradient(ellipse at 50% 0%, #1e1b4b 0%, var(--bg-dark) 70%);
+      color: var(--text-main);
       min-height: 100vh;
-      padding: 20px 14px;
+      padding: 24px 16px;
     }
 
-    .container { max-width: 1040px; margin: auto; }
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-    header {
+    /* Navigation / Header */
+    header.nav-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(21, 34, 67, 0.7);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      padding: 16px 22px;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      padding: 16px 24px;
       border-radius: 20px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
 
-    .brand h1 {
-      font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .brand-group { display: flex; align-items: center; gap: 14px; }
+    .brand-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
     }
+    .brand-text h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.3px; }
+    .brand-text p { font-size: 0.8rem; color: var(--text-muted); }
 
-    .brand p { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .live-indicator {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 99px; font-size: 0.8rem; color: #34d399; font-weight: 600;
+    }
+    .pulse-dot {
+      width: 8px; height: 8px; background: #10b981; border-radius: 50%;
+      box-shadow: 0 0 10px #10b981; animation: pulse-glow 1.8s infinite;
+    }
+    @keyframes pulse-glow { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
 
-    .grid {
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color);
+      color: var(--text-main); border-radius: 12px; padding: 8px 14px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-icon:hover { background: rgba(56, 189, 248, 0.15); border-color: var(--accent-cyan); }
+
+    /* Top KPI Summary Banner */
+    .kpi-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
+    .kpi-card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 16px; padding: 18px 20px; backdrop-filter: blur(12px);
+    }
+    .kpi-title { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; }
+    .kpi-value { font-size: 1.8rem; font-weight: 800; margin-top: 6px; color: #fff; }
+    .kpi-sub { font-size: 0.78rem; color: var(--accent-cyan); margin-top: 4px; }
 
-    .card {
-      background: rgba(28, 45, 89, 0.55);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--border);
-      border-radius: 22px;
+    /* Main Grid - Sensor Nodes */
+    .section-title {
+      font-size: 1rem; font-weight: 700; color: var(--text-muted);
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .nodes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .node-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
       padding: 22px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
       position: relative;
-      overflow: hidden;
-      transition: transform 0.25s, border-color 0.25s;
-    }
-
-    .card:hover { border-color: rgba(56, 189, 248, 0.5); }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 14px;
-    }
-
-    .sender-title { font-size: 1.05rem; font-weight: 700; color: var(--text); }
-    .sensor-sub { font-size: 0.8rem; color: var(--muted); }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      border-radius: 99px;
-      font-size: 0.82rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .badge-on { background: var(--on-bg); color: var(--on-text); box-shadow: 0 0 12px var(--on-glow); }
-    .badge-off { background: var(--off-bg); color: var(--off-text); box-shadow: 0 0 12px var(--off-glow); }
-    .badge-warn { background: var(--danger-bg); color: #fff; box-shadow: 0 0 14px var(--danger-glow); animation: pulse 1.8s infinite; }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.65; }
-    }
-
-    .lux-val {
-      font-size: 3rem;
-      font-weight: 900;
-      letter-spacing: -1px;
-      color: #fff;
-      line-height: 1;
-      margin: 10px 0 6px;
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-    }
-
-    .lux-unit { font-size: 1.1rem; font-weight: 600; color: var(--muted); }
-
-    .meter-bg {
-      width: 100%;
-      height: 10px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 99px;
-      overflow: hidden;
-      margin: 14px 0 8px;
-    }
-
-    .meter-fill {
-      height: 100%;
-      width: 0%;
-      border-radius: 99px;
-      background: linear-gradient(90deg, #06b6d4, #3b82f6, #ec4899);
-      transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .panel {
-      background: rgba(21, 34, 67, 0.7);
       backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .node-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .node-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .node-name { font-size: 1.05rem; font-weight: 700; color: #fff; }
+    .node-id { font-size: 0.75rem; color: var(--text-muted); font-mono: monospace; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 700;
+    }
+    .status-badge.on { background: var(--status-on-bg); border: 1px solid var(--status-on-border); color: var(--status-on-text); }
+    .status-badge.off { background: var(--status-off-bg); border: 1px solid var(--status-off-border); color: var(--status-off-text); }
+
+    .lux-display {
+      display: flex; align-items: baseline; gap: 6px;
+      margin: 12px 0 16px;
+    }
+    .lux-number { font-size: 2.8rem; font-weight: 900; letter-spacing: -1px; color: #fff; }
+    .lux-unit { font-size: 1rem; color: var(--text-muted); font-weight: 600; }
+
+    .progress-bar-bg {
+      width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08);
+      border-radius: 99px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; width: 0%; border-radius: 99px;
+      background: linear-gradient(90deg, #38bdf8, #3b82f6, #818cf8);
+      transition: width 0.5s ease;
+    }
+
+    /* System Telemetry Panel */
+    .telemetry-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 20px;
       padding: 20px 24px;
-      margin-bottom: 18px;
+      backdrop-filter: blur(12px);
+    }
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .data-table td { padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.88rem; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-label { color: var(--text-muted); }
+    .data-val { font-weight: 700; text-align: right; color: var(--text-main); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center;
+      padding: 16px; z-index: 999;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-card {
+      background: #0f172a; border: 1px solid var(--border-color);
+      border-radius: 24px; width: min(500px, 100%); padding: 28px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+    .modal-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; }
+    .input-field {
+      width: 100%; background: #070c1e; border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 12px 16px; color: #fff; font: inherit; margin-top: 6px;
+    }
+    .input-field:focus { outline: 0; border-color: var(--accent-cyan); }
+    .btn-submit {
+      width: 100%; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      border: 0; color: #fff; font-weight: 700; padding: 12px; border-radius: 12px;
+      margin-top: 18px; cursor: pointer;
     }
 
-    .panel-title {
-      font-size: 1.05rem;
-      font-weight: 800;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: 0.92rem;
-    }
-
-    .info-row:last-child { border-bottom: 0; }
-    .info-label { color: var(--muted); }
-    .info-val { font-weight: 700; }
-
-    @media (max-width: 768px) {
-      .lux-val { font-size: 2.5rem; }
-      header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    @media (max-width: 640px) {
+      header.nav-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .header-actions { width: 100%; justify-content: space-between; }
     }
   </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <div class="brand">
-      <h1 id="headerTitle">💡 Light Monitor Cloud</h1>
-      <p id="headerSub">ดึงข้อมูล Real-time อัตโนมัติจาก Google Apps Script</p>
+<div class="dashboard-container">
+  <!-- Top Navigation Header -->
+  <header class="nav-header">
+    <div class="brand-group">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-text">
+        <h1 id="appTitle">LIGHT MONITOR • CLOUD</h1>
+        <p>ศูนย์เฝ้าระวังและวิเคราะห์ระดับแสงสว่าง (Cloud Command Portal)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="live-indicator">
+        <span class="pulse-dot"></span>
+        <span id="syncText">Syncing...</span>
+      </div>
+      <button class="btn-icon" onclick="openConfigModal()">⚙️ ตั้งค่า API</button>
     </div>
   </header>
 
-  <!-- การ์ดแสดงผลเซนเซอร์ทั้ง 4 ห้อง -->
-  <section class="grid">
-    <!-- Sender #1 Card -->
-    <article class="card">
-      <div class="card-header">
+  <!-- Top KPI Metrics Banner -->
+  <section class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-title">ความสว่างเฉลี่ยรวม</div>
+      <div class="kpi-value"><span id="kpiAvgLux">--</span> <span style="font-size:1rem;color:var(--text-muted)">Lux</span></div>
+      <div class="kpi-sub" id="kpiOverallStatus">คำนวณจากทุกโหนด</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">โหนดที่เปิดใช้งาน</div>
+      <div class="kpi-value"><span id="kpiActiveCount">0</span> / 4</div>
+      <div class="kpi-sub">สถานะการทำงานครอบคลุม 4 ห้อง</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">สถานะความสว่าง</div>
+      <div class="kpi-value" id="kpiAlertText" style="font-size:1.4rem; padding-top:4px;">ปกติ</div>
+      <div class="kpi-sub" id="kpiAlertSub">ระดับแสงอยู่ในเกณฑ์มาตรฐาน</div>
+    </div>
+  </section>
+
+  <!-- Node Status Grid -->
+  <div class="section-title">🏢 รายงานความสว่างแยกตามโหนด (Node Sensors)</div>
+  <section class="nodes-grid">
+    <!-- Node 1 -->
+    <article class="node-card">
+      <div class="node-head">
         <div>
-          <div class="sender-title" id="s1Name">Sender #1</div>
-          <div class="sensor-sub">Node 1 • BH1750</div>
+          <div class="node-name" id="s1Name">Sender #1</div>
+          <div class="node-id">BH1750 • Node 01</div>
         </div>
-        <span id="s1Badge" class="badge badge-off">--</span>
+        <span class="status-badge off" id="s1Badge">--</span>
       </div>
-      <div class="lux-val"><span id="lux1">--</span> <span class="lux-unit">Lux</span></div>
-      <div class="meter-bg"><div id="meter1" class="meter-fill"></div></div>
+      <div class="lux-display">
+        <span class="lux-number" id="lux1">--</span>
+        <span class="lux-unit">Lux</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar1"></div></div>
     </article>
 
-    <!-- Sender #2 Card -->
-    <article class="card">
-      <div class="card-header">
+    <!-- Node 2 -->
+    <article class="node-card">
+      <div class="node-head">
         <div>
-          <div class="sender-title" id="s2Name">Sender #2</div>
-          <div class="sensor-sub">Node 2 • BH1750</div>
+          <div class="node-name" id="s2Name">Sender #2</div>
+          <div class="node-id">BH1750 • Node 02</div>
         </div>
-        <span id="s2Badge" class="badge badge-off">--</span>
+        <span class="status-badge off" id="s2Badge">--</span>
       </div>
-      <div class="lux-val"><span id="lux2">--</span> <span class="lux-unit">Lux</span></div>
-      <div class="meter-bg"><div id="meter2" class="meter-fill"></div></div>
+      <div class="lux-display">
+        <span class="lux-number" id="lux2">--</span>
+        <span class="lux-unit">Lux</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar2"></div></div>
     </article>
 
-    <!-- Sender #3 Card -->
-    <article class="card">
-      <div class="card-header">
+    <!-- Node 3 -->
+    <article class="node-card">
+      <div class="node-head">
         <div>
-          <div class="sender-title" id="s3Name">Sender #3</div>
-          <div class="sensor-sub">Node 3 • BH1750</div>
+          <div class="node-name" id="s3Name">Sender #3</div>
+          <div class="node-id">BH1750 • Node 03</div>
         </div>
-        <span id="s3Badge" class="badge badge-off">--</span>
+        <span class="status-badge off" id="s3Badge">--</span>
       </div>
-      <div class="lux-val"><span id="lux3">--</span> <span class="lux-unit">Lux</span></div>
-      <div class="meter-bg"><div id="meter3" class="meter-fill"></div></div>
+      <div class="lux-display">
+        <span class="lux-number" id="lux3">--</span>
+        <span class="lux-unit">Lux</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar3"></div></div>
     </article>
 
-    <!-- Sender #4 Card -->
-    <article class="card">
-      <div class="card-header">
+    <!-- Node 4 -->
+    <article class="node-card">
+      <div class="node-head">
         <div>
-          <div class="sender-title" id="s4Name">Sender #4</div>
-          <div class="sensor-sub">Node 4 • BH1750</div>
+          <div class="node-name" id="s4Name">Sender #4</div>
+          <div class="node-id">BH1750 • Node 04</div>
         </div>
-        <span id="s4Badge" class="badge badge-off">--</span>
+        <span class="status-badge off" id="s4Badge">--</span>
       </div>
-      <div class="lux-val"><span id="lux4">--</span> <span class="lux-unit">Lux</span></div>
-      <div class="meter-bg"><div id="meter4" class="meter-fill"></div></div>
-    </article>
-
-    <!-- การ์ดสรุปภาพรวม -->
-    <article class="card" style="background: rgba(37, 99, 235, 0.18); border-color: rgba(56, 189, 248, 0.4);">
-      <div class="card-header">
-        <div>
-          <div class="sender-title" style="color: var(--accent);">📊 ค่าเฉลี่ยรวมทุกห้อง</div>
-          <div class="sensor-sub">Overall Average Intensity</div>
-        </div>
-        <span id="overallBadge" class="badge badge-off">--</span>
+      <div class="lux-display">
+        <span class="lux-number" id="lux4">--</span>
+        <span class="lux-unit">Lux</span>
       </div>
-      <div class="lux-val"><span id="avgLux">--</span> <span class="lux-unit">Lux</span></div>
-      <div class="meter-bg"><div id="meterAvg" class="meter-fill"></div></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar4"></div></div>
     </article>
   </section>
 
-  <!-- Panel แสดงสถานะระบบ -->
-  <section class="panel">
-    <div class="panel-title">
-      <span>📡 สถานะข้อมูลคลาวด์ (Google Apps Script)</span>
-      <span id="alertBadge" class="badge badge-off">ระดับแสงปกติ</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">ชื่ออุปกรณ์ / สถานที่</span>
-      <span class="info-val" id="deviceName">--</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">เวลาบันทึกล่าสุด (Timestamp)</span>
-      <span class="info-val" id="lastUpdated">--</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">สถานะการเชื่อมต่อ API</span>
-      <span class="info-val" id="apiStatus">กำลังรอการเชื่อมต่อ...</span>
-    </div>
+  <!-- System Telemetry Panel -->
+  <section class="telemetry-panel">
+    <div class="section-title" style="margin-bottom:8px;">📡 ข้อมูลการเชื่อมต่อและโทรมาตร (Cloud Telemetry)</div>
+    <table class="data-table">
+      <tr>
+        <td class="data-label">ชื่ออุปกรณ์ / ระบบ (Device Identity)</td>
+        <td class="data-val" id="teleDevice">--</td>
+      </tr>
+      <tr>
+        <td class="data-label">อัปเดตล่าสุดลงชีต (Timestamp)</td>
+        <td class="data-val" id="teleTime">--</td>
+      </tr>
+      <tr>
+        <td class="data-label">สถานะการเชื่อมต่อ API (Cloud Endpoint)</td>
+        <td class="data-val" id="teleStatus" style="color:var(--accent-cyan)">กำลังดึงข้อมูล...</td>
+      </tr>
+    </table>
   </section>
 </div>
 
-<script>
-  // 📌 นำ Web App URL ที่ได้จาก Google Apps Script มาวางแทนที่ป้ายกำกับด้านล่างนี้
-  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx8bxsP08lt0Mmnpna-JsoAX0ujaVZi_OijU896bUWnFnGSap0N0wCTbHrlbo-BMUa6yg/exec";
+<!-- Modal Config -->
+<div class="modal-overlay" id="configModal">
+  <div class="modal-card">
+    <div class="modal-title">⚙️ ตั้งค่า Google Apps Script URL</div>
+    <form onsubmit="saveConfig(event)">
+      <label style="font-size:0.85rem; color:var(--text-muted)">Web App Exec URL</label>
+      <input type="url" class="input-field" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec" required>
+      <button type="submit" class="btn-submit">💾 บันทึกการเชื่อมต่อ</button>
+      <button type="button" class="btn-icon" style="width:100%; margin-top:8px;" onclick="closeConfigModal()">ยกเลิก</button>
+    </form>
+  </div>
+</div>
 
+<script>
+  // 📌 นำ URL ของคุณวางตรงนี้เพื่อใช้เป็นค่าเริ่มต้นสำหรับทุกคนที่เปิดลิงก์
+  const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbx8bxsP08lt0Mmnpna-JsoAX0ujaVZi_OijU896bUWnFnGSap0N0wCTbHrlbo-BMUa6yg/exec"; 
+
+  const STORAGE_KEY = "light_monitor_cloud_url";
   const $ = id => document.getElementById(id);
 
-  function setMeter(id, val) {
-    const v = Math.min(100, Math.max(0, (Number(val) || 0) / 1000 * 100));
-    const el = $(id);
-    if (el) el.style.width = v + '%';
+  function getActiveUrl() {
+    return localStorage.getItem(STORAGE_KEY) || DEFAULT_GAS_URL;
   }
 
-  function updateBadge(id, statusStr) {
-    const el = $(id);
+  function updateBadge(elementId, statusStr) {
+    const el = $(elementId);
     if (!el) return;
     if (!statusStr || statusStr === 'ไม่มีข้อมูล' || statusStr === '--') {
-      el.className = 'badge badge-off';
-      el.textContent = 'ไม่มีข้อมูล';
+      el.className = 'status-badge off';
+      el.textContent = 'OFFLINE';
       return;
     }
     if (statusStr.includes('เปิด') || statusStr.includes('ON')) {
-      el.className = 'badge badge-on';
-      el.textContent = '💡 ' + statusStr;
+      el.className = 'status-badge on';
+      el.textContent = '💡 ON';
     } else {
-      el.className = 'badge badge-off';
-      el.textContent = '🌑 ' + statusStr;
+      el.className = 'status-badge off';
+      el.textContent = '🌑 OFF';
     }
   }
 
-  async function fetchCloudData() {
-    if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("YOUR_SCRIPT_ID_HERE")) {
-      $('apiStatus').textContent = '⚠️ กรุณาใส่ URL ของ Google Apps Script ในไฟล์ index.html';
-      $('apiStatus').style.color = '#fbbf24';
+  function setProgressBar(elementId, luxVal) {
+    const v = Math.min(100, Math.max(0, (Number(luxVal) || 0) / 1000 * 100));
+    const el = $(elementId);
+    if (el) el.style.width = v + '%';
+  }
+
+  async function fetchDashboardData() {
+    const targetUrl = getActiveUrl();
+    if (!targetUrl || targetUrl.includes("sample")) {
+      $('teleStatus').textContent = '⚠️ ยังไม่ได้ระบุ Web App URL ที่ถูกต้อง';
+      $('teleStatus').style.color = '#f59e0b';
+      $('syncText').textContent = 'No URL';
       return;
     }
 
     try {
-      $('apiStatus').textContent = '🔄 กำลังดึงข้อมูล...';
-      $('apiStatus').style.color = 'var(--accent)';
+      $('syncText').textContent = 'Syncing...';
+      const res = await fetch(targetUrl, { cache: 'no-store' });
+      const json = await res.json();
 
-      const res = await fetch(GAS_WEB_APP_URL, { cache: 'no-store' });
-      const resData = await res.json();
+      if (json && json.data) {
+        const d = json.data;
 
-      if (resData && resData.data) {
-        const d = resData.data;
+        // Telemetry & Header
+        if (d.device) {
+          $('appTitle').textContent = d.device.toUpperCase();
+          $('teleDevice').textContent = d.device;
+        }
+        if (d.timestamp) $('teleTime').textContent = d.timestamp;
 
-        // อัปเดตข้อมูลหัวข้อ
-        if (d.device) $('deviceName').textContent = d.device;
-        if (d.timestamp) $('lastUpdated').textContent = d.timestamp;
-
-        // อัปเดตชื่อห้อง
+        // Sensor Node Names
         if (d.s1Name) $('s1Name').textContent = d.s1Name;
         if (d.s2Name) $('s2Name').textContent = d.s2Name;
         if (d.s3Name) $('s3Name').textContent = d.s3Name;
         if (d.s4Name) $('s4Name').textContent = d.s4Name;
 
-        // อัปเดตค่า Lux
+        // Lux Values
         const l1 = Number(d.lux1);
         const l2 = Number(d.lux2);
         const l3 = Number(d.lux3);
@@ -345,45 +414,72 @@
         $('lux2').textContent = (!isNaN(l2) && l2 >= 0) ? l2.toFixed(1) : '--';
         $('lux3').textContent = (!isNaN(l3) && l3 >= 0) ? l3.toFixed(1) : '--';
         $('lux4').textContent = (!isNaN(l4) && l4 >= 0) ? l4.toFixed(1) : '--';
-        $('avgLux').textContent = (!isNaN(avg) && avg >= 0) ? avg.toFixed(1) : '--';
+        $('kpiAvgLux').textContent = (!isNaN(avg) && avg >= 0) ? avg.toFixed(1) : '--';
 
-        setMeter('meter1', l1);
-        setMeter('meter2', l2);
-        setMeter('meter3', l3);
-        setMeter('meter4', l4);
-        setMeter('meterAvg', avg);
+        setProgressBar('bar1', l1);
+        setProgressBar('bar2', l2);
+        setProgressBar('bar3', l3);
+        setProgressBar('bar4', l4);
 
-        // อัปเดตสถานะ Badge
+        // Status Badges
         updateBadge('s1Badge', d.s1Status);
         updateBadge('s2Badge', d.s2Status);
         updateBadge('s3Badge', d.s3Status);
         updateBadge('s4Badge', d.s4Status);
-        updateBadge('overallBadge', d.status);
 
-        // เตือนระดับแสงเกินมาตรฐาน
-        const alertBadge = $('alertBadge');
+        // Active Nodes Count
+        let activeCount = 0;
+        [d.s1Status, d.s2Status, d.s3Status, d.s4Status].forEach(st => {
+          if (st && st !== 'ไม่มีข้อมูล' && st !== '--') activeCount++;
+        });
+        $('kpiActiveCount').textContent = activeCount;
+
+        // Alerts & Status
         if (d.isOver) {
-          alertBadge.className = 'badge badge-warn';
-          alertBadge.textContent = '⚠️ สว่างเกินมาตรฐาน!';
+          $('kpiAlertText').textContent = '⚠️ สว่างเกินเกณฑ์';
+          $('kpiAlertText').style.color = '#f43f5e';
+          $('kpiAlertSub').textContent = 'ตรวจพบความสว่างสูงกว่าค่ามาตรฐาน';
         } else {
-          alertBadge.className = 'badge badge-off';
-          alertBadge.textContent = 'ระดับแสงปกติ';
+          $('kpiAlertText').textContent = 'ปกติ';
+          $('kpiAlertText').style.color = '#10b981';
+          $('kpiAlertSub').textContent = 'ระดับแสงอยู่ในเกณฑ์มาตรฐาน';
         }
 
-        $('apiStatus').textContent = '🟢 เชื่อมต่อสำเร็จ (ดึงข้อมูลอัตโนมัติ)';
-        $('apiStatus').style.color = '#10b981';
+        $('kpiOverallStatus').textContent = 'สถานะภาพรวม: ' + (d.status || '--');
+
+        $('teleStatus').textContent = '🟢 เชื่อมต่อเสร็จสมบูรณ์ (200 OK)';
+        $('teleStatus').style.color = '#10b981';
+        $('syncText').textContent = 'ONLINE';
       }
     } catch (err) {
-      $('apiStatus').textContent = '🔴 ไม่สามารถดึงข้อมูลได้ (ตรวจสอบ URL หรือสิทธิ์ Web App)';
-      $('apiStatus').style.color = '#ef4444';
+      $('teleStatus').textContent = '🔴 เชื่อมต่อไม่สำเร็จ (ตรวจสอบ Web App URL หรือสิทธิ์การเข้าถึง)';
+      $('teleStatus').style.color = '#f43f5e';
+      $('syncText').textContent = 'ERROR';
     }
   }
 
-  // เริ่มต้นดึงข้อมูลเมื่อโหลดหน้าเว็บ
-  fetchCloudData();
+  function openConfigModal() {
+    $('urlInput').value = getActiveUrl();
+    $('configModal').classList.add('open');
+  }
 
-  // ตั้งเวลาดึงข้อมูลใหม่อัตโนมัติทุกๆ 10 วินาที
-  setInterval(fetchCloudData, 1000);
+  function closeConfigModal() {
+    $('configModal').classList.remove('open');
+  }
+
+  function saveConfig(e) {
+    e.preventDefault();
+    const val = $('urlInput').value.trim();
+    if (val) {
+      localStorage.setItem(STORAGE_KEY, val);
+      closeConfigModal();
+      fetchDashboardData();
+    }
+  }
+
+  // Initial Run
+  fetchDashboardData();
+  setInterval(fetchDashboardData, 10000);
 </script>
 </body>
 </html>
